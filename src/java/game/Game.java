@@ -6,6 +6,8 @@
 package game;
 
 import game.helpers.BetsValidator;
+import game.helpers.BetsWinnings;
+import game.helpers.CastingHelper;
 import game.jaxb.BetType;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -143,18 +145,30 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     public void resignPlayer(String playerName) {
+        Player player = players.getPlayer(playerName);
+
+        if (player != null && player.getStatus() == PlayerStatus.ACTIVE) {
+            player.setStatus(PlayerStatus.RETIRED);
+            events.playerResigned(playerName);
+        }
+
         if (gameDetails.getStatus() == GameStatus.ACTIVE && roundRunning == true) {
-            Player player = players.getPlayer(playerName);
-            if (player != null && player.getStatus() == PlayerStatus.ACTIVE) {
-                player.setStatus(PlayerStatus.RETIRED);
-                tryToEndRound();
-            }
+            tryToEndRound();
+        }
+    }
+
+    public void resignPlayer(int playerID) throws Exception {
+        Player player = players.getPlayer(playerID);
+        if (player != null) {
+            resignPlayer(player.name);
+        } else {
+            throw new Exception("failed to find player with given id.");
         }
     }
 
     public void play() {
         int roundNumber = 0;
-        
+
         while (players.getNumberOfActiveHumanPlayers() > 0) {
             roundNumber++;
             messageConsole("play(), round " + roundNumber + " starting.");
@@ -187,16 +201,23 @@ public class Game implements IChangeGameStatusObserver {
 
         timer.start(ROUND_MILLSEC);
         messageConsole("startRound(), timer started, " + ROUND_MILLSEC + " millsec.");
-        
+
         gameDetails.setStatus(GameStatus.ACTIVE);
         messageConsole("startRound(), round started.");
-        
+
         placeComputerBets();
     }
 
     private void endRound() {
         roundRunning = false;
         messageConsole("endRound(), round ended.");
+
+        resignPlayersThatsDidntPlaceEnoughtBets();
+
+        int winningNumber = turnWheel();
+        events.winningNumber(winningNumber);
+
+        giveMoneyToWinners(winningNumber);
     }
 
     private void endGame() {
@@ -206,7 +227,7 @@ public class Game implements IChangeGameStatusObserver {
 
     private void tryToEndRound() {
         messageConsole("tryToEndRound(), trying to end round.");
-        
+
         int numOfHumanPlayersFinishedPlacingBets = humanPlayersFinishedBetting.size();
         int numOfActiveHumanPlayers = players.getNumberOfActiveHumanPlayers();
         messageConsole("tryToEndRound(), active human players finished betting: " + numOfHumanPlayersFinishedPlacingBets);
@@ -225,7 +246,7 @@ public class Game implements IChangeGameStatusObserver {
         Random rnd = new Random();
         List<Player> compPlayers = players.players.entrySet().stream().filter(x -> x.getValue().type == PlayerType.COMPUTER && x.getValue().status == PlayerStatus.ACTIVE).map(x -> x.getValue()).collect(Collectors.toList());
         for (Player player : compPlayers) {
-            
+
             int num = rnd.nextInt() + 37;
             int money = rnd.nextInt() + player.money;
             ArrayList<Integer> numbers = new ArrayList<>();
@@ -234,19 +255,69 @@ public class Game implements IChangeGameStatusObserver {
                 placeBet(player, money, BetType.STRAIGHT, numbers);
             } catch (Exception e) {
             }
-            
+
         }
     }
 
-    private void placeBet(Player player, int money, BetType betType, ArrayList<Integer> numbers) {
-        if (player.money < money)
+    private void placeBet(Player player, int money, BetType betType, ArrayList<Integer> numbers) throws Exception {
+        if (player.money < money) {
             throw new Exception("Not enought money to place bet.");
-        
-        if (betsValidator.isBetValid(betType, numbers) == false)
-            throw new Exception("bet invalid.");
-        
-        player.substructMoney(money);
-        player.bets.add(new Bet(betType, numbers, money));
+        }
 
+        if (betsValidator.isBetValid(CastingHelper.cast(betType), numbers) == false) {
+            throw new Exception("bet invalid.");
+        }
+
+        player.substructMoney(money);
+        player.bets.add(new Bet(CastingHelper.cast(betType), numbers, money));
+
+        messageConsole("placeBet(), " + player.name + " placed bet of " + money + " on " + betType.name() + ", and now has $" + player.money + " left.");
+    }
+
+    public void placeBet(Integer id, int money, BetType betType, ArrayList<Integer> numbers) throws Exception {
+        Player player = players.getPlayer(id);
+        if (player != null) {
+            placeBet(player, money, betType, numbers);
+        } else {
+            throw new Exception("failed to find player with id " + id + ".");
+        }
+    }
+
+    private int turnWheel() {
+        Random rnd = new Random();
+        int max = (this.gameDetails.getRouletteType() == RouletteType.FRENCH) ? 36 : 37;
+        int res = rnd.nextInt() + max;
+        return res;
+    }
+
+    private void resignPlayersThatsDidntPlaceEnoughtBets() {
+        for (Player player : players.getActivePlayers()) {
+            if (player.bets.bets.size() < this.gameDetails.getMinWages()) {
+                resignPlayer(player.name);
+            }
+        }
+    }
+
+    private void giveMoneyToWinners(int winningNumber) {
+        for (Player player : players.getActivePlayers()) {
+            int winning = BetsWinnings.calcWinning(this.gameDetails.getRouletteType(), winningNumber, player.bets.bets);
+            player.addMoney(winning);
+            messageConsole("giveMoneyToWinners(), player " + player.name + " won $" + winning);
+            events.playerWon(player.name, winning);
+
+            if (player.money == 0) {
+                messageConsole("giveMoneyToWinners, player " + player.name + " is left with no money and need to be resigned.");
+                resignPlayer(player.name);
+            }
+        }
+    }
+
+    public void playerFinishedBetting(int id) throws Exception {
+        Player player = players.getPlayer(id);
+        if (player != null) {
+            humanPlayersFinishedBetting.put(id, true);
+        } else {
+            throw new Exception("failed to find player with id " + id + ".");
+        }
     }
 }

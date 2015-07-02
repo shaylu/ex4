@@ -99,6 +99,14 @@ public class Players {
     }
 
     int getNumberOfActiveHumanPlayers() {
-        return (int)players.values().stream().filter(x -> x.getStatus() == PlayerStatus.ACTIVE && x.getType() == PlayerType.HUMAN).count();
+        return (int)getActiveHumanPlayers().size();
+    }
+
+    List<Player> getActiveHumanPlayers() {
+        return players.values().stream().filter(x -> x.getStatus() == PlayerStatus.ACTIVE && x.getType() == PlayerType.HUMAN).collect(Collectors.toList());
+    }
+    
+    List<Player> getActivePlayers() {
+        return players.values().stream().filter(x -> x.getStatus() == PlayerStatus.ACTIVE).collect(Collectors.toList());
     }
 }

@@ -147,6 +147,14 @@ public class Player {
     public void setNameUsed(boolean nameUsed) {
         this.nameUsed = nameUsed;
     }
+
+    void substructMoney(int money) {
+        this.money -= money;
+    }
+
+    void addMoney(int money) {
+        this.money += money;
+    }
     
     
 }

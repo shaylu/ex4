@@ -6,9 +6,9 @@
 package game.ws;
 
 import game.Game;
+import game.jaxb.BetType;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import javax.jws.WebService;
 import ws.roulette.GameDoesNotExists;
 import ws.roulette.GameDoesNotExists_Exception;
@@ -83,18 +83,33 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public void makeBet(int betMoney, ws.roulette.BetType betType, java.util.List<java.lang.Integer> numbers, int playerId) throws ws.roulette.InvalidParameters_Exception {
-        //TODO implement this method
-        throw new UnsupportedOperationException("Not implemented yet.");
+        preformGameInitializeCheck();
+        
+        try {
+            game.placeBet(null, betMoney, BetType.TRIO, null);
+        } catch (Exception e) {
+            throw new InvalidParameters_Exception("failed to make bet, " + e.getMessage(), new InvalidParameters());
+        }
     }
 
     public void finishBetting(int playerId) throws ws.roulette.InvalidParameters_Exception {
-        //TODO implement this method
-        throw new UnsupportedOperationException("Not implemented yet.");
+        preformGameInitializeCheck();
+        
+        try {
+            game.playerFinishedBetting(playerId);
+        } catch (Exception e) {
+            throw new InvalidParameters_Exception("failed to finish betting, " + e.getMessage(), new InvalidParameters());
+        }
     }
 
     public void resign(int playerId) throws ws.roulette.InvalidParameters_Exception {
-        //TODO implement this method
-        throw new UnsupportedOperationException("Not implemented yet.");
+        preformGameInitializeCheck();
+        
+        try {
+            game.resignPlayer(playerId);
+        } catch (Exception e) {
+            throw new InvalidParameters_Exception("failed to finish betting, " + e.getMessage(), new InvalidParameters());
+        }
     }
 
     public java.lang.String createGameFromXML(java.lang.String xmlData) throws ws.roulette.DuplicateGameName_Exception, ws.roulette.InvalidParameters_Exception, ws.roulette.InvalidXML_Exception {
