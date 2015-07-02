@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<schemas xmlns='http://xml.netbeans.org/schema/JAXBWizConfig' destdir='build/generated-sources/jaxb' projectName='RouletteEX4Web' version='1.0'>
+	<schema type='-xmlschema' package='game.jaxb' name='rouletteJaxb'>
+		<xjc-options>
+		</xjc-options>
+		<schema-sources>
+			<schema-source location='src/conf/xml-resources/jaxb/rouletteJaxb/roulette.xsd' origLocation='../../לימודים/Java/תרגילים/XML and XSD v1.1/XML and XSD v1.1/roulette.xsd'/>
+		</schema-sources>
+		<bindings>
+		</bindings>
+		<catalog/>
+	</schema>
+</schemas>

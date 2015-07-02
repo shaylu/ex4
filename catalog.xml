@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
+    <system systemId="file:/E:/NetBeans%20Projects/RouletteEX4Web/../../לימודים/Java/תרגילים/XML%20and%20XSD%20v1.1/XML%20and%20XSD%20v1.1/roulette.xsd" uri="src/conf/xml-resources/jaxb/rouletteJaxb/roulette.xsd"/>
+    <system systemId="file:/E:/לימודים/Java/תרגילים/WSDL%201.2/RouletteWebServiceService.wsdl" uri="src/conf/xml-resources/web-services/RouletteWebServiceFromWSDL/wsdl/RouletteWebServiceService.wsdl"/>
+    <system systemId="file:/E:/לימודים/Java/תרגילים/WSDL%201.2/RouletteWebServiceService_schema1.xsd" uri="src/conf/xml-resources/web-services/RouletteWebServiceFromWSDL/wsdl/RouletteWebServiceService_schema1.xsd"/>
+</catalog>
