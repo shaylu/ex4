@@ -12,6 +12,7 @@ import java.util.Arrays;
 import javax.jws.WebService;
 import ws.roulette.GameDoesNotExists;
 import ws.roulette.GameDoesNotExists_Exception;
+import ws.roulette.GameStatus;
 import ws.roulette.InvalidParameters;
 import ws.roulette.InvalidParameters_Exception;
 
@@ -44,7 +45,7 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public void createGame(int computerizedPlayers, int humanPlayers, int initalSumOfMoney, int intMaxWages, int minWages, java.lang.String name, ws.roulette.RouletteType rouletteType) throws ws.roulette.InvalidParameters_Exception, ws.roulette.DuplicateGameName_Exception {
-        if (isGameInitialized() == true && game.isRunning()) {
+        if (game != null && game.getGameDetails().getStatus() != GameStatus.FINISHED) {
             throw new InvalidParameters_Exception("game already running.", new InvalidParameters());
         }
 
@@ -52,7 +53,7 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public ws.roulette.GameDetails getGameDetails(java.lang.String gameName) throws ws.roulette.GameDoesNotExists_Exception {
-        if (isGameInitialized() == false) {
+        if (game == null) {
             throw new GameDoesNotExists_Exception("Game is not running.", new GameDoesNotExists());
         }
 

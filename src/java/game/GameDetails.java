@@ -25,8 +25,12 @@ public class GameDetails extends ws.roulette.GameDetails {
 
     @Override
     public void setStatus(GameStatus value) {
-        GameStatus oldStatus = super.getStatus();
+        GameStatus oldStatus = this.getStatus();
         super.setStatus(value); //To change body of generated methods, choose Tools | Templates.
+        
+        if (oldStatus == null)
+            return;
+        
         if (!oldStatus.equals(value)) {
             if (oldStatus == GameStatus.WAITING && value == GameStatus.ACTIVE) {
                 if (statusChangesListener != null) {
