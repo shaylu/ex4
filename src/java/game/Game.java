@@ -192,8 +192,19 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     public void play() {
+        
+        synchronized (this)
+        {
+            if (this.getGameDetails().getStatus() == GameStatus.ACTIVE)
+            {
+                return;
+            }
+            else {
+                this.getGameDetails().setStatus(GameStatus.ACTIVE);
+            }
+        }
 
-        this.getGameDetails().setStatus(GameStatus.ACTIVE);
+        setAllPlayersAsActive();
         int roundNumber = 0;
 
         while (players.getNumberOfActiveHumanPlayers() > 0) {
@@ -207,7 +218,8 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     private void startRound() {
-
+        messageConsole("startRound(), round started.");
+        
         humanPlayersFinishedBetting = new HashMap<>();
         roundRunning = true;
 
@@ -217,7 +229,7 @@ public class Game implements IChangeGameStatusObserver {
         this.events.gameStarted(ROUND_MILLSEC);
         placeComputerBets();
 
-        while (roundRunning && secondsPass < secondsToRun) {
+        while (roundRunning && secondsPass < secondsToRun && players.getNumberOfActiveHumanPlayers() > 0) {
             try {
                 Thread.sleep(TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS));
                 // sleep one second
@@ -225,6 +237,8 @@ public class Game implements IChangeGameStatusObserver {
             }
             secondsPass++;
         }
+        
+        System.out.println("round over after " + secondsPass);
 
         endRound();
     }
@@ -236,6 +250,8 @@ public class Game implements IChangeGameStatusObserver {
         resignPlayersThatsDidntPlaceEnoughtBets();
 
         int winningNumber = turnWheel();
+        System.out.println("winning number is: " + winningNumber);
+        
         events.winningNumber(winningNumber);
 
         giveMoneyToWinners(winningNumber);
@@ -252,7 +268,7 @@ public class Game implements IChangeGameStatusObserver {
             return;
         }
 
-        if (humanPlayersFinishedBetting.size() == this.players.getNumberOfActiveHumanPlayers()) {
+        if (humanPlayersFinishedBetting.size() >= this.players.getNumberOfActiveHumanPlayers()) {
             // all the active human players finsihed placing their bets
             // we can end round
             setRoundEnd();
@@ -293,6 +309,7 @@ public class Game implements IChangeGameStatusObserver {
         player.bets.add(new Bet(CastingHelper.cast(betType), numbers, money));
 
         messageConsole("placeBet(), " + player.name + " placed bet of " + money + " on " + betType.name() + ", and now has $" + player.money + " left.");
+        events.playerPlacedABet(player.name, CastingHelper.cast(betType), numbers, money);
 
         boolean finishedBetting = isPlayerPlacedMaxBets(player);
         if (finishedBetting == true) {
@@ -311,8 +328,9 @@ public class Game implements IChangeGameStatusObserver {
 
     private int turnWheel() {
         Random rnd = new Random();
+        int min = 0;
         int max = (this.gameDetails.getRouletteType() == RouletteType.FRENCH) ? 36 : 37;
-        int res = rnd.nextInt() + max;
+        int res = rnd.nextInt((max - min) + 1) + min;
         return res;
     }
 
@@ -371,6 +389,12 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     private void setRoundEnd() {
-        this.roundRunning = true;
+        this.roundRunning = false;
+    }
+
+    private void setAllPlayersAsActive() {
+        for (Player player : players.getPlayers()) {
+            player.setStatus(PlayerStatus.ACTIVE);
+        }
     }
 }

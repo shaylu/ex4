@@ -60,9 +60,12 @@ public class GameDetails extends ws.roulette.GameDetails {
             int minBetsPerPlayer,
             int maxBetsPerPlayer) {
         this();
+        this.setName(gameName);
         this.setRouletteType(type);
         this.setLoadedFromXML(loadedFromXML);
         this.setInitalSumOfMoney(initialAmountOfMoneyPerPlayer);
+        this.setHumanPlayers(numOfHumanPlayers);
+        this.setComputerizedPlayers(numOfComputerPlayers);
         this.setMinWages(minBetsPerPlayer);
         this.setIntMaxWages(maxBetsPerPlayer);
     }

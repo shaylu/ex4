@@ -14,7 +14,7 @@ public class PlayerDetails extends ws.roulette.PlayerDetails{
     public PlayerDetails(Player player) {
         super();
         this.setName(player.getName());
-        this.setType(ws.roulette.PlayerType.valueOf(player.getStatus().value()));
+        this.setType(ws.roulette.PlayerType.valueOf(player.getType().value()));
         this.setStatus(ws.roulette.PlayerStatus.valueOf(player.getStatus().value()));
         this.setMoney(player.money);
     }

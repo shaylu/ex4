@@ -6,6 +6,7 @@
 package game;
 
 import game.helpers.UniqueIDGenerator;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,19 +56,30 @@ public class Players {
     }
 
     public int add(Player player) throws Exception {
-        
-        if (game.getGameDetails().getStatus() == GameStatus.ACTIVE)
-            throw new Exception("Game is running.");
 
-        if (isPlayerNameExist(player.getName()) == false || (isPlayerNameExist(player.getName()) == true && getPlayer(player.getName()).nameUsed == false)) {
-            int id = idsGenerator.getNewId();
-            players.put(id, player);
+        if (game.getGameDetails().getStatus() != GameStatus.WAITING) {
+            throw new Exception("Game is not waiting for players.");
+        }
 
-            return id;
+        if (game.getGameDetails().isLoadedFromXML() == true) {
+            // game loaded from xml
+            if (isPlayerNameExist(player.getName()) == false) {
+                throw new Exception("no player with the given name can be found in players list.");
+            }
+
+            if (isPlayerNameExist(player.getName()) == true && getPlayer(player.getName()).nameUsed == true) {
+                throw new Exception("player name is already in use.");
+            }
+        } else {
+            if (isPlayerNameExist(player.getName()) == true) {
+                throw new Exception("player name is already in use.");
+            }
         }
-        else {
-            throw new Exception("Player name exist.");
-        }
+
+        int id = idsGenerator.getNewId();
+        players.put(id, player);
+
+        return id;
     }
 
     /**
@@ -115,5 +127,9 @@ public class Players {
 
     List<Player> getActivePlayers() {
         return players.values().stream().filter(x -> x.getStatus() == PlayerStatus.ACTIVE).collect(Collectors.toList());
+    }
+    
+    List<Player> getPlayers(){
+        return new ArrayList<>(players.values());
     }
 }

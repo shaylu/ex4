@@ -34,11 +34,6 @@ public class RouletteWebServiceFromWSDL {
         return (game != null);
     }
 
-//    protected void preformGameInitializeCheck() throws ws.roulette.InvalidParameters_Exception {
-//        if (isGameInitialized() == false) {
-//            throw new InvalidParameters_Exception("game isn't initialized", new InvalidParameters());
-//        }
-//    }
     public java.util.List<ws.roulette.Event> getEvents(int eventId, int playerId) throws ws.roulette.InvalidParameters_Exception {
         if (game != null) {
             return game.getEvents(eventId);

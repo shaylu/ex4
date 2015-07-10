@@ -6,6 +6,7 @@
 package game;
 
 import game.helpers.UniqueIDGenerator;
+import java.util.List;
 import ws.roulette.EventType;
 
 /**
@@ -23,5 +24,9 @@ public class Event extends ws.roulette.Event{
         super();
         id = idsGenerator.getNewId();
         this.type = type;
+    }
+    
+    public void setNumbers(List<Integer> numbers){
+        this.numbers = numbers;
     }
 }

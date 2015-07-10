@@ -45,11 +45,12 @@ public class Events {
         events.put(event.getId(), event);
     }
     
-    public void playerPlacedABet(String playerName, BetType type, int amount){
+    public void playerPlacedABet(String playerName, BetType type, List<Integer> numbers, int amount){
         Event event = new Event(EventType.PLAYER_BET);
         event.setPlayerName(playerName);
         event.setBetType(type);
         event.setAmount(amount);
+        event.setNumbers(numbers);
         events.put(event.getId(), event);
     }
     
