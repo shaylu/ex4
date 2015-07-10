@@ -53,6 +53,8 @@ public class Game implements IChangeGameStatusObserver {
     protected BetsValidator betsValidator;
 
     public Game(String XMLData) throws Exception {
+        System.out.println("Game(), creating a game instance from XML data.");
+
         game.jaxb.Roulette roulette;
 
         try {
@@ -84,17 +86,24 @@ public class Game implements IChangeGameStatusObserver {
         this.betsValidator = new BetsValidator(type);
 
         createComputerPlayers();
+
+        System.out.println("Game(), successfully created a game instance.");
     }
 
     public Game(String name, RouletteType type, int initAmountOfMoney, int numOfHumanPlayers, int numOfComputerPlayers, int minBetsPerPlayer, int maxBetsPerPlayer) {
+        System.out.println("Game(), creating a game instance from settings.");
+
         this.gameDetails = new GameDetails(name, type, false, initAmountOfMoney, numOfHumanPlayers, numOfComputerPlayers, minBetsPerPlayer, maxBetsPerPlayer);
         this.events = new Events();
         this.players = new Players(this);
         this.betsValidator = new BetsValidator(type);
 
+        System.out.println("Game(), successfully created a game instance.");
     }
 
     public int joinGame(String playerName) throws ws.roulette.InvalidParameters_Exception {
+        System.out.println("joinGame(), trying to join game, given name: '" + playerName + "'.");
+
         int id;
 
         try {
@@ -108,6 +117,7 @@ public class Game implements IChangeGameStatusObserver {
             players.getPlayer(playerName).setNameUsed(true);
         }
 
+        System.out.println("joinGame(), successfully joined game.");
         return id;
     }
 

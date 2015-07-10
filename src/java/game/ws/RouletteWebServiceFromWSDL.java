@@ -69,7 +69,12 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public int joinGame(java.lang.String gameName, java.lang.String playerName) throws ws.roulette.InvalidParameters_Exception, ws.roulette.GameDoesNotExists_Exception {
-        preformGameInitializeCheck();
+        if (game == null)
+            throw new GameDoesNotExists_Exception("Game not initialized.", new GameDoesNotExists());
+        
+        if (game.getGameDetails().getStatus() != GameStatus.WAITING)
+            throw new InvalidParameters_Exception("Can't join game because of it's state.", new InvalidParameters());
+        
         return game.joinGame(playerName);
     }
 

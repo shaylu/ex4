@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import ws.roulette.GameStatus;
 import ws.roulette.PlayerStatus;
 import ws.roulette.PlayerType;
 
@@ -19,6 +20,7 @@ import ws.roulette.PlayerType;
  * @author Dell
  */
 public class Players {
+
     protected HashMap<Integer, Player> players;
     protected UniqueIDGenerator idsGenerator;
     protected Game game;
@@ -47,20 +49,26 @@ public class Players {
         return (found.isPresent() ? found.get() : null);
     }
 
-    public int add(String name, PlayerType type, int initAmountMoney) throws Exception{
-       Player player = new Player(name, type, initAmountMoney);
-       return add(player);
+    public int add(String name, PlayerType type, int initAmountMoney) throws Exception {
+        Player player = new Player(name, type, initAmountMoney);
+        return add(player);
     }
 
     public int add(Player player) throws Exception {
         
-        if (isPlayerNameExist(player.getName()) == true)
+        if (game.getGameDetails().getStatus() == GameStatus.ACTIVE)
+            throw new Exception("Game is running.");
+
+        if (isPlayerNameExist(player.getName()) == false || (isPlayerNameExist(player.getName()) == true && getPlayer(player.getName()).nameUsed == false)) {
+            int id = idsGenerator.getNewId();
+            players.put(id, player);
+
+            return id;
+        }
+        else {
             throw new Exception("Player name exist.");
-        
-        int id = idsGenerator.getNewId();
-        players.put(id, player);
-        
-        return id;
+        }
+
     }
 
     /**
@@ -72,20 +80,20 @@ public class Players {
         Optional<Map.Entry<Integer, Player>> found = players.entrySet().stream().filter(x -> x.getValue().name.equals(playerName)).findFirst();
         return (found.isPresent() ? found.get().getKey() : 0);
     }
-    
-    public List<PlayerDetails> getPlayersDetails(){
+
+    public List<PlayerDetails> getPlayersDetails() {
         return players.values().stream().map(x -> new PlayerDetails(x)).collect(Collectors.toList());
     }
 
     int getNumberOfHumanPlayers() {
-        return (int)players.entrySet().stream().filter(x -> x.getValue().getType() == PlayerType.HUMAN).count();
+        return (int) players.entrySet().stream().filter(x -> x.getValue().getType() == PlayerType.HUMAN).count();
     }
 
     int getNumberOfComputerPlayers() {
-        return (int)players.entrySet().stream().filter(x -> x.getValue().getType() == PlayerType.COMPUTER).count();
+        return (int) players.entrySet().stream().filter(x -> x.getValue().getType() == PlayerType.COMPUTER).count();
     }
-    
-    boolean isPlayerNameExist(String playerName){
+
+    boolean isPlayerNameExist(String playerName) {
         return players.values().stream().filter(x -> x.getName().equals(playerName)).count() > 0;
     }
 
@@ -99,13 +107,13 @@ public class Players {
     }
 
     int getNumberOfActiveHumanPlayers() {
-        return (int)getActiveHumanPlayers().size();
+        return (int) getActiveHumanPlayers().size();
     }
 
     List<Player> getActiveHumanPlayers() {
         return players.values().stream().filter(x -> x.getStatus() == PlayerStatus.ACTIVE && x.getType() == PlayerType.HUMAN).collect(Collectors.toList());
     }
-    
+
     List<Player> getActivePlayers() {
         return players.values().stream().filter(x -> x.getStatus() == PlayerStatus.ACTIVE).collect(Collectors.toList());
     }

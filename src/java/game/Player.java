@@ -28,6 +28,10 @@ public class Player {
     protected Bets bets;
     protected boolean finishedPlacingBets;
     protected boolean nameUsed; // on xml loaded games this will be true if someone took this name
+    
+    public boolean getNameUsed(){
+        return nameUsed;
+    }
 
     public Player() {
         id = idsGenerator.getNewId();
