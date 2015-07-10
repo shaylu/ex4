@@ -68,7 +68,6 @@ public class Players {
         else {
             throw new Exception("Player name exist.");
         }
-
     }
 
     /**

@@ -25,23 +25,23 @@ public class GameDetails extends ws.roulette.GameDetails {
 
     @Override
     public void setStatus(GameStatus value) {
-        GameStatus oldStatus = this.getStatus();
+//        GameStatus oldStatus = this.getStatus();
         super.setStatus(value); //To change body of generated methods, choose Tools | Templates.
-        
-        if (oldStatus == null)
-            return;
-        
-        if (!oldStatus.equals(value)) {
-            if (oldStatus == GameStatus.WAITING && value == GameStatus.ACTIVE) {
-                if (statusChangesListener != null) {
-                    statusChangesListener.gameStarted();
-                }
-            } else if (oldStatus == GameStatus.ACTIVE && value == GameStatus.FINISHED) {
-                if (statusChangesListener != null) {
-                    statusChangesListener.gameOvered();
-                }
-            }
-        }
+//        
+//        if (oldStatus == null)
+//            return;
+//        
+//        if (!oldStatus.equals(value)) {
+//            if (oldStatus == GameStatus.WAITING && value == GameStatus.ACTIVE) {
+//                if (statusChangesListener != null) {
+//                    statusChangesListener.gameStarted();
+//                }
+//            } else if (oldStatus == GameStatus.ACTIVE && value == GameStatus.FINISHED) {
+//                if (statusChangesListener != null) {
+//                    statusChangesListener.gameOvered();
+//                }
+//            }
+//        }
     }
 
     private GameDetails() {
@@ -70,5 +70,4 @@ public class GameDetails extends ws.roulette.GameDetails {
     void humanPlayerJoined() {
         joinedHumanPlayers++;
     }
-
 }

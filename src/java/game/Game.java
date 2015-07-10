@@ -30,6 +30,7 @@ import ws.roulette.InvalidParameters_Exception;
 import ws.roulette.PlayerStatus;
 import ws.roulette.PlayerType;
 import ws.roulette.RouletteType;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -90,13 +91,15 @@ public class Game implements IChangeGameStatusObserver {
         System.out.println("Game(), successfully created a game instance.");
     }
 
-    public Game(String name, RouletteType type, int initAmountOfMoney, int numOfHumanPlayers, int numOfComputerPlayers, int minBetsPerPlayer, int maxBetsPerPlayer) {
+    public Game(String name, RouletteType type, int initAmountOfMoney, int numOfHumanPlayers, int numOfComputerPlayers, int minBetsPerPlayer, int maxBetsPerPlayer) throws Exception {
         System.out.println("Game(), creating a game instance from settings.");
 
         this.gameDetails = new GameDetails(name, type, false, initAmountOfMoney, numOfHumanPlayers, numOfComputerPlayers, minBetsPerPlayer, maxBetsPerPlayer);
         this.events = new Events();
         this.players = new Players(this);
         this.betsValidator = new BetsValidator(type);
+
+        createComputerPlayers();
 
         System.out.println("Game(), successfully created a game instance.");
     }
@@ -117,11 +120,23 @@ public class Game implements IChangeGameStatusObserver {
             players.getPlayer(playerName).setNameUsed(true);
         }
 
+        int numberOfHumanPlayersJoined = this.players.getNumberOfHumanPlayers();
+        int numberOfNeededHumanPlayers = this.gameDetails.getHumanPlayers();
+
+        if (numberOfHumanPlayersJoined == numberOfNeededHumanPlayers) {
+            // can start game
+            System.out.println("joinGame(), enought human players joined, can start game");
+            Thread t = new Thread(() -> {
+                this.play();
+            });
+            t.start();
+        }
+
         System.out.println("joinGame(), successfully joined game.");
         return id;
     }
 
-    protected void createComputerPlayers() throws Exception {
+    private void createComputerPlayers() throws Exception {
         int numOfComputerPlayers = gameDetails.getComputerizedPlayers();
         for (int i = 0; i < numOfComputerPlayers; i++) {
             players.add(computerPlayersNames[i], PlayerType.COMPUTER, gameDetails.getInitalSumOfMoney());
@@ -177,45 +192,41 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     public void play() {
+
+        this.getGameDetails().setStatus(GameStatus.ACTIVE);
         int roundNumber = 0;
 
         while (players.getNumberOfActiveHumanPlayers() > 0) {
             roundNumber++;
             messageConsole("play(), round " + roundNumber + " starting.");
 
-            Thread thread = new Thread(() -> startRound());
-            thread.start();
-
-            try {
-                thread.join();
-            } catch (Exception e) {
-                messageConsole("play(), thread failed to join()");
-            }
+            startRound();
         }
 
         endGame();
     }
 
     private void startRound() {
+
         humanPlayersFinishedBetting = new HashMap<>();
         roundRunning = true;
 
-        if (timer == null) {
-            timer = new GameTimer();
-            timer.isTimerStopped.addListener((object, oldValue, newValue) -> {
-                if (oldValue == false && newValue == true) {
-                    endRound();
-                }
-            });
+        int secondsPass = 0;
+        int secondsToRun = (int) TimeUnit.SECONDS.convert(ROUND_MILLSEC, TimeUnit.MILLISECONDS);
+
+        this.events.gameStarted(ROUND_MILLSEC);
+        placeComputerBets();
+
+        while (roundRunning && secondsPass < secondsToRun) {
+            try {
+                Thread.sleep(TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS));
+                // sleep one second
+            } catch (Exception e) {
+            }
+            secondsPass++;
         }
 
-        timer.start(ROUND_MILLSEC);
-        messageConsole("startRound(), timer started, " + ROUND_MILLSEC + " millsec.");
-
-        gameDetails.setStatus(GameStatus.ACTIVE);
-        messageConsole("startRound(), round started.");
-
-        placeComputerBets();
+        endRound();
     }
 
     private void endRound() {
@@ -233,18 +244,18 @@ public class Game implements IChangeGameStatusObserver {
     private void endGame() {
         messageConsole("endGame(), game ending.");
         gameDetails.setStatus(GameStatus.FINISHED);
+        this.events.gameOver();
     }
 
     private void tryToEndRound() {
-        messageConsole("tryToEndRound(), trying to end round.");
+        if (roundRunning == false || this.getGameDetails().getStatus() != GameStatus.ACTIVE) {
+            return;
+        }
 
-        int numOfHumanPlayersFinishedPlacingBets = humanPlayersFinishedBetting.size();
-        int numOfActiveHumanPlayers = players.getNumberOfActiveHumanPlayers();
-        messageConsole("tryToEndRound(), active human players finished betting: " + numOfHumanPlayersFinishedPlacingBets);
-        messageConsole("tryToEndRound(), active human players: " + numOfActiveHumanPlayers);
-
-        if (numOfHumanPlayersFinishedPlacingBets == numOfActiveHumanPlayers) {
-            timer.stop();
+        if (humanPlayersFinishedBetting.size() == this.players.getNumberOfActiveHumanPlayers()) {
+            // all the active human players finsihed placing their bets
+            // we can end round
+            setRoundEnd();
         }
     }
 
@@ -282,6 +293,11 @@ public class Game implements IChangeGameStatusObserver {
         player.bets.add(new Bet(CastingHelper.cast(betType), numbers, money));
 
         messageConsole("placeBet(), " + player.name + " placed bet of " + money + " on " + betType.name() + ", and now has $" + player.money + " left.");
+
+        boolean finishedBetting = isPlayerPlacedMaxBets(player);
+        if (finishedBetting == true) {
+            playerFinishedBetting(player.id);
+        }
     }
 
     public void placeBet(Integer id, int money, BetType betType, ArrayList<Integer> numbers) throws Exception {
@@ -323,11 +339,38 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     public void playerFinishedBetting(int id) throws Exception {
-        Player player = players.getPlayer(id);
-        if (player != null) {
-            humanPlayersFinishedBetting.put(id, true);
+        if (roundRunning == true) {
+            Player player = players.getPlayer(id);
+            if (player != null && !humanPlayersFinishedBetting.containsKey(id)) {
+                humanPlayersFinishedBetting.put(id, true);
+            } else {
+                throw new Exception("failed to find player with id " + id + ".");
+            }
         } else {
-            throw new Exception("failed to find player with id " + id + ".");
+            throw new Exception("round is not running.");
         }
+
+//        if (humanPlayersFinishedBetting.size() == this.players.getNumberOfActiveHumanPlayers())
+//        {
+//            // all the active human players finsihed placing their bets
+//            // we can end round
+//            setRoundEnd();
+//        }
+        tryToEndRound();
+    }
+
+    private boolean isPlayerPlacedMaxBets(Player player) {
+        int numberOfBetsByPlayer = player.getBets().bets.size();
+        int numberOfMaxBetsPerPlayer = this.getGameDetails().getIntMaxWages();
+
+        if (numberOfBetsByPlayer == numberOfMaxBetsPerPlayer) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void setRoundEnd() {
+        this.roundRunning = true;
     }
 }

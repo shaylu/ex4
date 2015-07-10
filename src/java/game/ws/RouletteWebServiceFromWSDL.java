@@ -6,6 +6,7 @@
 package game.ws;
 
 import game.Game;
+import game.helpers.CastingHelper;
 import game.jaxb.BetType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,15 +34,17 @@ public class RouletteWebServiceFromWSDL {
         return (game != null);
     }
 
-    protected void preformGameInitializeCheck() throws ws.roulette.InvalidParameters_Exception {
-        if (isGameInitialized() == false) {
-            throw new InvalidParameters_Exception("game isn't initialized", new InvalidParameters());
-        }
-    }
-
+//    protected void preformGameInitializeCheck() throws ws.roulette.InvalidParameters_Exception {
+//        if (isGameInitialized() == false) {
+//            throw new InvalidParameters_Exception("game isn't initialized", new InvalidParameters());
+//        }
+//    }
     public java.util.List<ws.roulette.Event> getEvents(int eventId, int playerId) throws ws.roulette.InvalidParameters_Exception {
-        preformGameInitializeCheck();
-        return game.getEvents(eventId);
+        if (game != null) {
+            return game.getEvents(eventId);
+        } else {
+            throw new InvalidParameters_Exception("game is not initialized yet.", new InvalidParameters());
+        }
     }
 
     public void createGame(int computerizedPlayers, int humanPlayers, int initalSumOfMoney, int intMaxWages, int minWages, java.lang.String name, ws.roulette.RouletteType rouletteType) throws ws.roulette.InvalidParameters_Exception, ws.roulette.DuplicateGameName_Exception {
@@ -49,7 +52,11 @@ public class RouletteWebServiceFromWSDL {
             throw new InvalidParameters_Exception("game already running.", new InvalidParameters());
         }
 
-        game = new Game(name, rouletteType, initalSumOfMoney, humanPlayers, computerizedPlayers, minWages, intMaxWages);
+        try {
+            game = new Game(name, rouletteType, initalSumOfMoney, humanPlayers, computerizedPlayers, minWages, intMaxWages);
+        } catch (Exception e) {
+            throw new InvalidParameters_Exception(e.getMessage(), new InvalidParameters());
+        }
     }
 
     public ws.roulette.GameDetails getGameDetails(java.lang.String gameName) throws ws.roulette.GameDoesNotExists_Exception {
@@ -61,25 +68,31 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public java.util.List<java.lang.String> getWaitingGames() {
-        if (isGameInitialized() == true && game.isRunning() == false) {
-            return Arrays.asList(new String[]{game.getGameDetails().getName()});
+        if (game != null && game.getGameDetails().getStatus() == GameStatus.WAITING) {
+            ArrayList<String> result = new ArrayList<>();
+            result.add(game.getGameDetails().getName());
+            return result;
         } else {
             return new ArrayList<>();
         }
     }
 
     public int joinGame(java.lang.String gameName, java.lang.String playerName) throws ws.roulette.InvalidParameters_Exception, ws.roulette.GameDoesNotExists_Exception {
-        if (game == null)
+        if (game == null) {
             throw new GameDoesNotExists_Exception("Game not initialized.", new GameDoesNotExists());
-        
-        if (game.getGameDetails().getStatus() != GameStatus.WAITING)
+        }
+
+        if (game.getGameDetails().getStatus() != GameStatus.WAITING) {
             throw new InvalidParameters_Exception("Can't join game because of it's state.", new InvalidParameters());
-        
+        }
+
         return game.joinGame(playerName);
     }
 
     public ws.roulette.PlayerDetails getPlayerDetails(int playerId) throws ws.roulette.GameDoesNotExists_Exception, ws.roulette.InvalidParameters_Exception {
-        preformGameInitializeCheck();
+        if (game == null) {
+            throw new GameDoesNotExists_Exception("game is not initialized yet.", new GameDoesNotExists());
+        }
 
         if (game.getPlayers().isPlayerExist(playerId) == true) {
             return game.getPlayers().getPlayersDetails(playerId);
@@ -89,18 +102,25 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public void makeBet(int betMoney, ws.roulette.BetType betType, java.util.List<java.lang.Integer> numbers, int playerId) throws ws.roulette.InvalidParameters_Exception {
-        preformGameInitializeCheck();
-        
+        if (game == null) {
+            throw new InvalidParameters_Exception("game is not initialized yet.", new InvalidParameters());
+        }
+        if (game != null && game.getGameDetails().getStatus() != GameStatus.ACTIVE) {
+            throw new InvalidParameters_Exception("game is inactive.", new InvalidParameters());
+        }
+
         try {
-            game.placeBet(null, betMoney, BetType.TRIO, null);
+            game.placeBet(playerId, betMoney, BetType.valueOf(betType.name()), new ArrayList<>(numbers));
         } catch (Exception e) {
             throw new InvalidParameters_Exception("failed to make bet, " + e.getMessage(), new InvalidParameters());
         }
     }
 
     public void finishBetting(int playerId) throws ws.roulette.InvalidParameters_Exception {
-        preformGameInitializeCheck();
-        
+        if (game == null) {
+            throw new InvalidParameters_Exception("game is not initialized yet.", new InvalidParameters());
+        }
+
         try {
             game.playerFinishedBetting(playerId);
         } catch (Exception e) {
@@ -109,7 +129,9 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public void resign(int playerId) throws ws.roulette.InvalidParameters_Exception {
-        preformGameInitializeCheck();
+        if (game == null) {
+            throw new InvalidParameters_Exception("game is not initialized yet.", new InvalidParameters());
+        }
         
         try {
             game.resignPlayer(playerId);
@@ -133,13 +155,9 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public java.util.List<ws.roulette.PlayerDetails> getPlayersDetails(java.lang.String gameName) throws ws.roulette.GameDoesNotExists_Exception {
-        try {
-            preformGameInitializeCheck();
-        } catch (Exception e) {
-            throw new GameDoesNotExists_Exception(e.getMessage(), new GameDoesNotExists());
-        }
-
+        if (game == null)
+            return new ArrayList<>();
+        
         return new ArrayList<>(game.getPlayers().getPlayersDetails());
     }
-
 }
