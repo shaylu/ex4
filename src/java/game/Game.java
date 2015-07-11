@@ -212,6 +212,7 @@ public class Game implements IChangeGameStatusObserver {
             messageConsole("play(), round " + roundNumber + " starting.");
 
             startRound();
+            waitFor(10);
         }
 
         endGame();
@@ -227,6 +228,8 @@ public class Game implements IChangeGameStatusObserver {
         int secondsToRun = (int) TimeUnit.SECONDS.convert(ROUND_MILLSEC, TimeUnit.MILLISECONDS);
 
         this.events.gameStarted(ROUND_MILLSEC);
+        
+        waitFor(5);
         placeComputerBets();
 
         while (roundRunning && secondsPass < secondsToRun && players.getNumberOfActiveHumanPlayers() > 0) {
@@ -407,5 +410,14 @@ public class Game implements IChangeGameStatusObserver {
             System.out.println(player.toString());
         }
         System.out.println("== end players status");
+    }
+
+    private void waitFor(int secondsToWait) {
+        for (int i = 0; i < secondsToWait; i++) {
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
     }
 }
