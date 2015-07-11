@@ -218,6 +218,7 @@ public class Game implements IChangeGameStatusObserver {
     private void startRound() {
         messageConsole("startRound(), round started.");
 
+        resetBets();
         humanPlayersFinishedBetting = new HashMap<>();
         roundRunning = true;
 
@@ -418,6 +419,12 @@ public class Game implements IChangeGameStatusObserver {
                 Thread.sleep(1000);
             } catch (Exception e) {
             }
+        }
+    }
+
+    private void resetBets() {
+        for (Player player : players.getPlayers()) {
+            player.bets.clear();
         }
     }
 }
