@@ -192,14 +192,11 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     public void play() {
-        
-        synchronized (this)
-        {
-            if (this.getGameDetails().getStatus() == GameStatus.ACTIVE)
-            {
+
+        synchronized (this) {
+            if (this.getGameDetails().getStatus() == GameStatus.ACTIVE) {
                 return;
-            }
-            else {
+            } else {
                 this.getGameDetails().setStatus(GameStatus.ACTIVE);
             }
         }
@@ -220,7 +217,7 @@ public class Game implements IChangeGameStatusObserver {
 
     private void startRound() {
         messageConsole("startRound(), round started.");
-        
+
         humanPlayersFinishedBetting = new HashMap<>();
         roundRunning = true;
 
@@ -228,7 +225,7 @@ public class Game implements IChangeGameStatusObserver {
         int secondsToRun = (int) TimeUnit.SECONDS.convert(ROUND_MILLSEC, TimeUnit.MILLISECONDS);
 
         this.events.gameStarted(ROUND_MILLSEC);
-        
+
         waitFor(5);
         placeComputerBets();
 
@@ -240,7 +237,7 @@ public class Game implements IChangeGameStatusObserver {
             }
             secondsPass++;
         }
-        
+
         System.out.println("round over after " + secondsPass);
 
         endRound();
@@ -254,11 +251,11 @@ public class Game implements IChangeGameStatusObserver {
 
         int winningNumber = turnWheel();
         System.out.println("winning number is: " + winningNumber);
-        
+
         events.winningNumber(winningNumber);
 
         giveMoneyToWinners(winningNumber);
-        
+
         printPlayersStatusToLog();
     }
 
@@ -286,11 +283,14 @@ public class Game implements IChangeGameStatusObserver {
 
     private void placeComputerBets() {
         Random rnd = new Random();
+        int min = 0;
+        int max = (this.gameDetails.getRouletteType() == RouletteType.FRENCH) ? 36 : 37;
+        
         List<Player> compPlayers = players.players.entrySet().stream().filter(x -> x.getValue().type == PlayerType.COMPUTER && x.getValue().status == PlayerStatus.ACTIVE).map(x -> x.getValue()).collect(Collectors.toList());
         for (Player player : compPlayers) {
-
-            int num = rnd.nextInt() + 37;
+            int num = rnd.nextInt((max - min) + 1) + min;
             int money = rnd.nextInt() + player.money;
+            
             ArrayList<Integer> numbers = new ArrayList<>();
             numbers.add(num);
             try {
