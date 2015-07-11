@@ -255,6 +255,8 @@ public class Game implements IChangeGameStatusObserver {
         events.winningNumber(winningNumber);
 
         giveMoneyToWinners(winningNumber);
+        
+        printPlayersStatusToLog();
     }
 
     private void endGame() {
@@ -396,5 +398,14 @@ public class Game implements IChangeGameStatusObserver {
         for (Player player : players.getPlayers()) {
             player.setStatus(PlayerStatus.ACTIVE);
         }
+    }
+
+    private void printPlayersStatusToLog() {
+        System.out.println("== players status:");
+        List<Player> playersList = players.getPlayers();
+        for (Player player : playersList) {
+            System.out.println(player.toString());
+        }
+        System.out.println("== end players status");
     }
 }

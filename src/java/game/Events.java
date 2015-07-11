@@ -61,7 +61,7 @@ public class Events {
     }
     
     public void playerWon(String playerName, int winningAmount){
-        Event event = new Event(EventType.WINNING_NUMBER);
+        Event event = new Event(EventType.RESULTS_SCORES);
         event.setPlayerName(playerName);
         event.setAmount(winningAmount);
         events.put(event.getId(), event);

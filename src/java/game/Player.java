@@ -159,6 +159,9 @@ public class Player {
     void addMoney(int money) {
         this.money += money;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "player name: '" + this.getName() + "', status: '" + this.getStatus() + "', money: " + this.getMoney();
+    }
 }
