@@ -127,7 +127,7 @@ public class RouletteWebServiceFromWSDL {
         if (game == null) {
             throw new InvalidParameters_Exception("game is not initialized yet.", new InvalidParameters());
         }
-        
+
         try {
             game.resignPlayer(playerId);
         } catch (Exception e) {
@@ -136,23 +136,23 @@ public class RouletteWebServiceFromWSDL {
     }
 
     public java.lang.String createGameFromXML(java.lang.String xmlData) throws ws.roulette.DuplicateGameName_Exception, ws.roulette.InvalidParameters_Exception, ws.roulette.InvalidXML_Exception {
-        if (isGameInitialized() == true && game.isRunning() == true) {
+        if (game == null || game.getGameDetails().getStatus() == GameStatus.FINISHED) {
             try {
                 game = new Game(xmlData);
+                return game.getGameDetails().getName();
             } catch (Exception e) {
-                throw new InvalidParameters_Exception("failed to create game from XML, " + e.getMessage(), new InvalidParameters());
+                throw new ws.roulette.InvalidParameters_Exception(e.getMessage(), new InvalidParameters());
             }
-
-            return game.getGameDetails().getName();
-        } else {
+        }else{
             throw new InvalidParameters_Exception("game is already running.", new InvalidParameters());
         }
     }
 
     public java.util.List<ws.roulette.PlayerDetails> getPlayersDetails(java.lang.String gameName) throws ws.roulette.GameDoesNotExists_Exception {
-        if (game == null)
+        if (game == null) {
             return new ArrayList<>();
-        
+        }
+
         return new ArrayList<>(game.getPlayers().getPlayersDetails());
     }
 }
