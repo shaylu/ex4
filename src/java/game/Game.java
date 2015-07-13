@@ -45,6 +45,7 @@ public class Game implements IChangeGameStatusObserver {
         computerPlayersNames = new String[]{"Apollo", "Jupiter", "Neptune", "Pluto", "Gemini", "Luna"};
     }
 
+    protected GamesManager gamesManager;
     protected GameDetails gameDetails;
     protected Players players;
     protected Events events;
@@ -53,7 +54,7 @@ public class Game implements IChangeGameStatusObserver {
     protected boolean roundRunning;
     protected BetsValidator betsValidator;
 
-    public Game(String XMLData) throws Exception {
+    public Game(GamesManager manager, String XMLData) throws Exception {
         System.out.println("Game(), creating a game instance from XML data.");
 
         game.jaxb.Roulette roulette;
@@ -82,6 +83,7 @@ public class Game implements IChangeGameStatusObserver {
         int humanPlayers = this.players.getNumberOfHumanPlayers();
         int computerPlayers = this.players.getNumberOfComputerPlayers();
 
+        this.gamesManager = manager;
         this.gameDetails = new GameDetails(name, type, loadedFromXML, initAmountOfMoney, humanPlayers, computerPlayers, minBets, maxBets);
         this.events = new Events();
         this.betsValidator = new BetsValidator(type);
@@ -91,9 +93,10 @@ public class Game implements IChangeGameStatusObserver {
         System.out.println("Game(), successfully created a game instance.");
     }
 
-    public Game(String name, RouletteType type, int initAmountOfMoney, int numOfHumanPlayers, int numOfComputerPlayers, int minBetsPerPlayer, int maxBetsPerPlayer) throws Exception {
+    public Game(GamesManager manger, String name, RouletteType type, int initAmountOfMoney, int numOfHumanPlayers, int numOfComputerPlayers, int minBetsPerPlayer, int maxBetsPerPlayer) throws Exception {
         System.out.println("Game(), creating a game instance from settings.");
 
+        this.gamesManager = manger;
         this.gameDetails = new GameDetails(name, type, false, initAmountOfMoney, numOfHumanPlayers, numOfComputerPlayers, minBetsPerPlayer, maxBetsPerPlayer);
         this.events = new Events();
         this.players = new Players(this);
@@ -105,6 +108,10 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     public int joinGame(String playerName) throws ws.roulette.InvalidParameters_Exception {
+        if (getGameDetails().getStatus() != GameStatus.WAITING) {
+            throw new InvalidParameters_Exception("game is not waiting to get new players.", new InvalidParameters());
+        }
+
         System.out.println("joinGame(), trying to join game, given name: '" + playerName + "'.");
 
         int id;
@@ -137,6 +144,10 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     private void createComputerPlayers() throws Exception {
+        if (getGameDetails().isLoadedFromXML() == true) {
+            return;
+        }
+
         int numOfComputerPlayers = gameDetails.getComputerizedPlayers();
         for (int i = 0; i < numOfComputerPlayers; i++) {
             players.add(computerPlayersNames[i], PlayerType.COMPUTER, gameDetails.getInitalSumOfMoney());
@@ -286,12 +297,12 @@ public class Game implements IChangeGameStatusObserver {
         Random rnd = new Random();
         int min = 0;
         int max = (this.gameDetails.getRouletteType() == RouletteType.FRENCH) ? 36 : 37;
-        
+
         List<Player> compPlayers = players.players.entrySet().stream().filter(x -> x.getValue().type == PlayerType.COMPUTER && x.getValue().status == PlayerStatus.ACTIVE).map(x -> x.getValue()).collect(Collectors.toList());
         for (Player player : compPlayers) {
             int num = rnd.nextInt((max - min) + 1) + min;
-            int money = rnd.nextInt() + player.money;
-            
+            int money = rnd.nextInt((player.getMoney() - 1) + 1) + 1;
+
             ArrayList<Integer> numbers = new ArrayList<>();
             numbers.add(num);
             try {
@@ -303,6 +314,9 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     private void placeBet(Player player, int money, BetType betType, ArrayList<Integer> numbers) throws Exception {
+        if (getGameDetails().getStatus() != GameStatus.ACTIVE || roundRunning != true)
+            throw new Exception("game is not running or inactive");
+        
         if (player.money < money) {
             throw new Exception("Not enought money to place bet.");
         }

@@ -30,8 +30,9 @@ public class Players {
         this(game);
         List<game.jaxb.Players.Player> playersList = roulette.getPlayers().getPlayer();
         for (game.jaxb.Players.Player player : playersList) {
-            int id = idsGenerator.getNewId();
-            this.players.put(id, new Player(player));
+            Player gamePlayer = new Player(player);
+            int playerId = gamePlayer.getId();
+            this.players.put(playerId, gamePlayer);
         }
     }
 
@@ -70,16 +71,17 @@ public class Players {
             if (isPlayerNameExist(player.getName()) == true && getPlayer(player.getName()).nameUsed == true) {
                 throw new Exception("player name is already in use.");
             }
+            
+            return getPlayerID(player.name);
         } else {
             if (isPlayerNameExist(player.getName()) == true) {
                 throw new Exception("player name is already in use.");
+            } else {
+                // in case of xml game the list of playes is already set
+                players.put(player.getId(), player);
+                return player.id;
             }
         }
-
-        int id = idsGenerator.getNewId();
-        players.put(id, player);
-
-        return id;
     }
 
     /**
@@ -128,8 +130,12 @@ public class Players {
     List<Player> getActivePlayers() {
         return players.values().stream().filter(x -> x.getStatus() == PlayerStatus.ACTIVE).collect(Collectors.toList());
     }
-    
-    List<Player> getPlayers(){
+
+    List<Player> getPlayers() {
         return new ArrayList<>(players.values());
+    }
+
+    public List<ws.roulette.PlayerDetails> getUnusedHumanPlayers() {
+        return players.values().stream().filter(x -> x.nameUsed == false && x.getType() == PlayerType.HUMAN).map(x -> new PlayerDetails(x)).collect(Collectors.toList());
     }
 }
