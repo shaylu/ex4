@@ -110,7 +110,7 @@ public class BetsValidator {
             int thirdRow = getNumberRow(third);
             int forth = sorted.get(3);
 
-            if ((thirdRow == firstRow + 1) && (third == first + 3) && (first + 1 == second) && (third + 1 == forth)) {
+            if ((thirdRow == firstRow) && (third == first + 3) && (first + 1 == second) && (third + 1 == forth)) {
                 res = true;
             }
         }
@@ -123,11 +123,11 @@ public class BetsValidator {
             ArrayList<Integer> sorted = createSortedList(numbers.toArray(new Integer[numbers.size()]));
             int first = sorted.get(0);
             if (getNumberRow(first) == LOWER_ROW) {
-                boolean flag = false;
+                boolean flag = true;
                 for (int i = 0; i < 6; i++) {
                     int sortedNumber = sorted.get(i);
                     if (sortedNumber != first + i) {
-                        flag = true;
+                        flag = false;
                     }
                 }
 
