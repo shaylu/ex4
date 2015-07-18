@@ -44,10 +44,11 @@ public class GameDetails extends ws.roulette.GameDetails {
 //        }
     }
 
-    private GameDetails() {
+    private GameDetails() throws Exception {
         super();
         this.setStatus(GameStatus.WAITING);
         this.joinedHumanPlayers = 0;
+        validate();
     }
 
     public GameDetails(
@@ -58,7 +59,7 @@ public class GameDetails extends ws.roulette.GameDetails {
             int numOfHumanPlayers,
             int numOfComputerPlayers,
             int minBetsPerPlayer,
-            int maxBetsPerPlayer) {
+            int maxBetsPerPlayer) throws Exception {
         this();
         this.setName(gameName);
         this.setRouletteType(type);
@@ -72,5 +73,15 @@ public class GameDetails extends ws.roulette.GameDetails {
 
     void humanPlayerJoined() {
         joinedHumanPlayers++;
+    }
+
+    private void validate() throws Exception {
+        if (humanPlayers + computerizedPlayers > 6) {
+            throw new Exception("Maximum players is 6.");
+        }
+
+        if (humanPlayers < 1) {
+            throw new Exception("Minimum human player is 1.");
+        }
     }
 }

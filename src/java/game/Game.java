@@ -80,8 +80,10 @@ public class Game implements IChangeGameStatusObserver {
         int initAmountOfMoney = roulette.getInitSumOfMoney();
         int minBets = roulette.getMinBetsPerPlayer();
         int maxBets = roulette.getMaxBetsPerPlayer();
-        int humanPlayers = this.players.getNumberOfHumanPlayers();
-        int computerPlayers = this.players.getNumberOfComputerPlayers();
+        int humanPlayers = (int)roulette.getPlayers().getPlayer().stream().filter(x -> x.getType() == game.jaxb.PlayerType.HUMAN).count();
+        int computerPlayers = (int)roulette.getPlayers().getPlayer().stream().filter(x -> x.getType() == game.jaxb.PlayerType.COMPUTER).count();
+        
+
 
         this.gamesManager = manager;
         this.gameDetails = new GameDetails(name, type, loadedFromXML, initAmountOfMoney, humanPlayers, computerPlayers, minBets, maxBets);
@@ -116,17 +118,27 @@ public class Game implements IChangeGameStatusObserver {
 
         int id;
 
-        try {
-            id = players.add(playerName, PlayerType.HUMAN, gameDetails.getInitalSumOfMoney());
-            gameDetails.humanPlayerJoined();
-        } catch (Exception e) {
-            throw new InvalidParameters_Exception("failed to join game, " + e.getMessage(), new InvalidParameters());
+        if (getGameDetails().isLoadedFromXML() == true) {
+            Player player = players.getPlayer(playerName);
+            if (player != null) {
+                if (player.getNameUsed() == false) {
+                    id = player.getId();
+                    player.setNameUsed(true);
+                } else {
+                    throw new InvalidParameters_Exception("player already used.", new InvalidParameters());
+                }
+            } else {
+                throw new InvalidParameters_Exception("player doesn't exist.", new InvalidParameters());
+            }
+        } else {
+            try {
+                id = players.add(playerName, PlayerType.HUMAN, gameDetails.getInitalSumOfMoney());
+            } catch (Exception e) {
+                throw new InvalidParameters_Exception("failed to join game, " + e.getMessage(), new InvalidParameters());
+            }
         }
 
-        if (gameDetails.isLoadedFromXML() == true) {
-            players.getPlayer(playerName).setNameUsed(true);
-        }
-
+        gameDetails.humanPlayerJoined();
         int numberOfHumanPlayersJoined = this.players.getNumberOfHumanPlayers();
         int numberOfNeededHumanPlayers = this.gameDetails.getHumanPlayers();
 
@@ -314,9 +326,10 @@ public class Game implements IChangeGameStatusObserver {
     }
 
     private void placeBet(Player player, int money, BetType betType, ArrayList<Integer> numbers) throws Exception {
-        if (getGameDetails().getStatus() != GameStatus.ACTIVE || roundRunning != true)
+        if (getGameDetails().getStatus() != GameStatus.ACTIVE || roundRunning != true) {
             throw new Exception("game is not running or inactive");
-        
+        }
+
         if (player.money < money) {
             throw new Exception("Not enought money to place bet.");
         }
@@ -381,6 +394,7 @@ public class Game implements IChangeGameStatusObserver {
             Player player = players.getPlayer(id);
             if (player != null && !humanPlayersFinishedBetting.containsKey(id)) {
                 humanPlayersFinishedBetting.put(id, true);
+                events.playerFinishedBetting(player.getName());
             } else {
                 throw new Exception("failed to find player with id " + id + ".");
             }

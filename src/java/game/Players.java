@@ -71,7 +71,7 @@ public class Players {
             if (isPlayerNameExist(player.getName()) == true && getPlayer(player.getName()).nameUsed == true) {
                 throw new Exception("player name is already in use.");
             }
-            
+
             return getPlayerID(player.name);
         } else {
             if (isPlayerNameExist(player.getName()) == true) {
@@ -99,7 +99,11 @@ public class Players {
     }
 
     int getNumberOfHumanPlayers() {
-        return (int) players.entrySet().stream().filter(x -> x.getValue().getType() == PlayerType.HUMAN).count();
+        if (this.game.getGameDetails().isLoadedFromXML() == true) {
+            return (int) players.entrySet().stream().filter(x -> x.getValue().getType() == PlayerType.HUMAN && x.getValue().getNameUsed() == true).count();
+        } else {
+            return (int) players.entrySet().stream().filter(x -> x.getValue().getType() == PlayerType.HUMAN).count();
+        }
     }
 
     int getNumberOfComputerPlayers() {
