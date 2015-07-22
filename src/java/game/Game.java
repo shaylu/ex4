@@ -82,8 +82,6 @@ public class Game implements IChangeGameStatusObserver {
         int maxBets = roulette.getMaxBetsPerPlayer();
         int humanPlayers = (int)roulette.getPlayers().getPlayer().stream().filter(x -> x.getType() == game.jaxb.PlayerType.HUMAN).count();
         int computerPlayers = (int)roulette.getPlayers().getPlayer().stream().filter(x -> x.getType() == game.jaxb.PlayerType.COMPUTER).count();
-        
-
 
         this.gamesManager = manager;
         this.gameDetails = new GameDetails(name, type, loadedFromXML, initAmountOfMoney, humanPlayers, computerPlayers, minBets, maxBets);
